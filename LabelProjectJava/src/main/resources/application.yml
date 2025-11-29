@@ -1,0 +1,51 @@
+spring:
+  datasource:
+    username: root
+    password: 123456
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/label-project
+
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+    virtual-host: /
+    publisher-confirm-type: correlated
+    publisher-returns: true
+    listener:
+      simple:
+        acknowledge-mode: auto
+        concurrency: 5
+        max-concurrency: 10
+        prefetch: 1
+        retry:
+          enabled: false
+          max-attempts: 3
+          initial-interval: 1000ms
+
+  data:
+    redis:
+      # ??????
+      host: localhost           # Redis?????
+      port: 6379
+      database: 3
+      # ?????
+      lettuce:
+        pool:
+          max-active: 8        # ?????
+          max-idle: 8          # ???????
+          min-idle: 0          # ???????
+          max-wait: -1ms       # ??????????(-1??????)
+      timeout: 2000ms          # ??????
+
+#  servlet:
+#    multipart:
+#      # 启用文件上传支持
+#      enabled: true
+#      # 单个文件的最大大小
+#      max-file-size: 10MB
+#      # 整个请求的最大大小（包括所有文件和表单数据）
+#      max-request-size: 100MB
+#      # 文件写入磁盘的阈值（超过这个大小会写入临时文件）
+#      file-size-threshold: 0

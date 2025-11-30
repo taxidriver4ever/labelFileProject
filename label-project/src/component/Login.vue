@@ -80,7 +80,7 @@ async function login() {
       localStorage.setItem("userUUID", res.data.data.userUUID);
       localStorage.setItem("loginUUID", res.data.data.loginUUID);
       alert("登录成功")
-      window.location.href = "/home/upload-file"
+      window.location.href = "/upload-file"
     }
   }).catch(e => {
     alert(e);

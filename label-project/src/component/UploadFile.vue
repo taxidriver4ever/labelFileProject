@@ -1,5 +1,8 @@
 <template>
-  <div style="display: flex; align-items: center; justify-content: center; height: 100vh; flex-direction: column;background-color:thistle;">
+  <div style="display: flex; align-items: center; height: 100vh; flex-direction: column;background-color:thistle;">
+    <div style="margin-right: auto;margin-bottom: 12%;">
+      <ElButton type="text" style="color: black;margin: 15px;" @click="backToLogin"><ElIcon><Back/></ElIcon>&nbsp;&nbsp;退出登录</ElButton>
+    </div>
     <h2 style="font-size: 40px;">上传数据</h2>
     <br></br>
     <el-upload v-model:file-list="fileList" :headers="{ userUUID: userUUID, loginUUID: loginUUID }"
@@ -26,8 +29,9 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import { ElUpload, ElButton, ElLink } from 'element-plus'
+import { ElUpload, ElButton, ElLink, ElIcon, ElMessage } from 'element-plus'
 import type { UploadProps, UploadUserFile, UploadInstance } from 'element-plus'
+import { Back } from '@element-plus/icons-vue';
 
 const fileList = ref<UploadUserFile[]>([])
 const uploadRef = ref<UploadInstance>()
@@ -42,10 +46,15 @@ function uploadFile() {
 }
 
 const handleUploadSuccess: UploadProps['onSuccess'] = (res) => {
-  alert(res);
+  ElMessage.success(res);
   if (fileList.value.length === fileListMaxSize) fileList.value.shift();
 }
 const handleUploadError: UploadProps['onError'] = () => {
   alert("文件上传失败可能是因为文件过大")
+}
+function backToLogin(){
+  window.location.href = "/login"
+  localStorage.removeItem("userUUID");
+  localStorage.removeItem("loginUUID");
 }
 </script>

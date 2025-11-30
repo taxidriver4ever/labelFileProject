@@ -1,39 +1,29 @@
 <template>
   <div style="height: 100vh;display: flex;">
     <ElContainer style="display: flex;">
-      <ElAside style="width: 18%;background-color:gold;padding: 20px;height: 100vh;">
-        <h2>待处理的文件</h2>
-        <br></br>
-        <div v-for="(url, index) in urls" :key="index" style="font-size: 14px;">
-          文件{{ index + 1 }}
-        </div>
-      </ElAside>
-      <ElMain style="background-color: aquamarine;">
-        <h2>需要处理的文件</h2>
+      <ElMain style="background-color: aquamarine; display: flex; flex-direction: column;align-items: center;">
+        <h2 style="margin-top: 80px;">需要处理的文件</h2>
         <div v-if="isConnected" style="font-size: 20px;font-weight: 200;">websocket已连接</div>
-        <div v-else style="font-size: 20px;font-weight: 700;">websocket未连接</div>
+        <div v-else style="font-size: 20px;font-weight: 200;">websocket未连接</div>
         <br></br>
         <el-link href="/upload-file">点击此处回到上传文件</el-link>
 
         <br></br>
-        <!-- 修复 el-link -->
-        <el-link v-if="fileNeedToHandle" :href="fileNeedToHandle" target="_blank" type="primary"
+        <el-link v-if="fileNeedToHandle !== ''" :href="fileNeedToHandle" target="_blank" type="primary"
           style="margin: 10px 0;">
           查看文件
         </el-link>
         <div v-else style="margin: 10px 0;">暂无文件需要处理</div>
         <br></br>
-        <div>产生的n个向量序列</div>
-        <ElInput style="width: 600px;" v-model="textVectorSequence"></ElInput>
+        <ElInput placeholder="产生的n个向量序列" style="width: 600px;" v-model="textVectorSequence"></ElInput>
         <br></br>
         <br></br>
-        <div>完成标注后的n个偏移后向量序列</div>
-        <ElInput style="width: 600px;" v-model="offsetVectorSequence"></ElInput>
+        <ElInput placeholder="完成标注后的n个偏移后向量序列" style="width: 600px;" v-model="offsetVectorSequence"></ElInput>
         <br></br>
         <br></br>
         <br></br>
         <br></br>
-        <ElButton style="width: 150px;">提交</ElButton>
+        <ElButton @click="commitTheVector" style="width: 150px;">提交</ElButton>
       </ElMain>
     </ElContainer>
   </div>
@@ -43,7 +33,7 @@
 import { ref, onMounted, computed } from 'vue';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
-import axios from 'axios';
+import axios, { all } from 'axios';
 import { ElAside, ElButton, ElContainer, ElInput, ElLink, ElMain } from 'element-plus';
 
 const stompClient = ref<Client | null>(null); // STOMP客户端
@@ -127,8 +117,35 @@ function getToDoUrls() {
   })
 }
 
-function commitTheVector(){
-  
+async function commitTheVector() {
+  if(fileNeedToHandle.value === "") {
+    alert("目前暂无处理文件")
+    return
+  }
+  if (textVectorSequence.value === "") {
+    alert("请输入完整")
+    return
+  }
+  if (offsetVectorSequence.value === "") {
+    alert("请输入完整")
+    return
+  }
+  await axios({
+    url: serverUrl + "/file/vector",
+    method: "POST",
+    headers: {
+      "userUUID": localStorage.getItem("userUUID"),
+      "loginUUID": localStorage.getItem("loginUUID")
+    },
+    data: {
+      textVectorSequence: textVectorSequence.value,
+      offsetVectorSequence: offsetVectorSequence.value
+    }
+  }).then(res => {
+    if (res.data.code === 200) window.location.href = "/handle-file"
+  }).catch(e => {
+    console.log(e)
+  })
 }
 
 onMounted(() => {

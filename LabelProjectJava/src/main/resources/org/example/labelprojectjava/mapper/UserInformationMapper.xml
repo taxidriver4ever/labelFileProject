@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.example.labelprojectjava.mapper.UserInformationMapper">
+    <select id="getUserUUID" resultType="java.lang.String">
+        select userUUID from user_information;
+    </select>
+    <select id="getUserUUIDByUserNameAndUserPassword" resultType="java.lang.String">
+        select userUUID from user_information where userName = #{userName} and userPassword = #{userPassword};
+
+    </select>
+</mapper>

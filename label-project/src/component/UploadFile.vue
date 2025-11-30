@@ -1,60 +1,51 @@
 <template>
-  <div style="display: flex;height: 100vh;align-items: center; justify-content: center;">
-    <div style="display: flex;">
-      <el-upload v-model:file-list="fileList" class="upload-demo" :action="url + '/file/upload'" multiple
-        :on-preview="handlePreview" :on-success="handleUploadSuccess" :on-remove="handleRemove"
-        :before-remove="beforeRemove" :limit="fileListMaxSize" :on-exceed="handleExceed">
-        <el-button type="primary">点击上传</el-button>
-        <template #tip>
-          <div class="el-upload__tip">
-            文件大小应当小于10MB
-          </div>
-        </template>
-      </el-upload>
+  <div style="display: flex; align-items: center; justify-content: center; height: 100vh; flex-direction: column;background-color:thistle;">
+    <h2 style="font-size: 40px;">上传数据</h2>
+    <br></br>
+    <el-upload v-model:file-list="fileList" :headers="{ userUUID: userUUID, loginUUID: loginUUID }"
+      :on-success="handleUploadSuccess" ref="uploadRef" class="upload-demo" :on-error-="handleUploadError"
+      :action="url + '/file/upload'" :auto-upload="false" multiple>
+      <template #trigger>
+        <el-button type="primary" style="border-radius: 20px;font-size: 25px;height: 60px;" size="large">选择文件</el-button>
+      </template>
+
+      <el-button style="margin-left: 20px;font-size: 25px;height: 60px;border-radius: 20px;margin-bottom: 5px;" class="ml-3" type="success"
+        @click="uploadFile">
+        上传文件
+      </el-button>
+
+    </el-upload>
+    <div class="el-upload__tip">
+      传输文件小于10MB
     </div>
+    <br></br>
+    <ElLink href="/handle-file">点击跳转处理数据</ElLink>
+
   </div>
 </template>
 
-<script lang="ts" setup>
-import { ref } from 'vue'
-import { ElMessage, ElMessageBox, ElUpload, ElButton } from 'element-plus'
-
-import type { UploadProps, UploadUserFile } from 'element-plus'
-
-const url = "http://127.0.0.1:8080";
+<script setup lang="ts">
+import { ref } from 'vue';
+import { ElUpload, ElButton, ElLink } from 'element-plus'
+import type { UploadProps, UploadUserFile, UploadInstance } from 'element-plus'
 
 const fileList = ref<UploadUserFile[]>([])
-
+const uploadRef = ref<UploadInstance>()
+const url = "http://127.0.0.1:8080";
 const fileListMaxSize = 4;
+const userUUID = localStorage.getItem("userUUID");
+const loginUUID = localStorage.getItem("loginUUID");
 
-const handleRemove: UploadProps['onRemove'] = (file, uploadFiles) => {
-  console.log(file, uploadFiles)
-}
-
-const handlePreview: UploadProps['onPreview'] = (uploadFile) => {
-  console.log(uploadFile)
-}
-
-const handleExceed: UploadProps['onExceed'] = (files, uploadFiles) => {
-  ElMessage.warning(
-    `The limit is 3, you selected ${files.length} files this time, add up to ${files.length + uploadFiles.length
-    } totally`
-  )
+// 发送消息
+function uploadFile() {
+  uploadRef.value!.submit()
 }
 
 const handleUploadSuccess: UploadProps['onSuccess'] = (res) => {
   alert(res);
   if (fileList.value.length === fileListMaxSize) fileList.value.shift();
 }
-
-const beforeRemove: UploadProps['beforeRemove'] = (uploadFile, uploadFiles) => {
-  return ElMessageBox.confirm(
-    `删除历史数据${uploadFile.name} ?`
-  ).then(
-    () => true,
-    () => false
-  )
+const handleUploadError: UploadProps['onError'] = () => {
+  alert("文件上传失败可能是因为文件过大")
 }
 </script>
-
-<style scoped></style>

@@ -42,7 +42,6 @@ const serverUrl = "http://localhost:8080"
 const userUUID = localStorage.getItem("userUUID");
 const loginUUID = localStorage.getItem("loginUUID");
 const isConnected = ref(false)
-const urls = ref<string[]>([]);
 const fileNeedToHandle = ref<string | undefined>("");
 const textVectorSequence = ref("")
 const offsetVectorSequence = ref("")
@@ -92,12 +91,12 @@ const connect = () => {
 
 // 处理收到的消息
 const handleIncomingMessage = (fileUrl: string) => {
-  urls.value.push(fileUrl)
+  fileNeedToHandle.value = fileUrl;
 };
 
 function getToDoUrls() {
   axios({
-    url: serverUrl + "/file/urls",
+    url: serverUrl + "/file/url",
     method: "POST",
     headers: {
       "userUUID": userUUID,
@@ -108,8 +107,7 @@ function getToDoUrls() {
     }
   }).then(res => {
     if (res.data.code === 200) {
-      urls.value = res.data.data;
-      fileNeedToHandle.value = urls.value.shift();
+      fileNeedToHandle.value = res.data.data;
     }
     else console.log(res.data.msg);
   }).catch(e => {
@@ -138,6 +136,7 @@ async function commitTheVector() {
       "loginUUID": localStorage.getItem("loginUUID")
     },
     data: {
+      userUUID: localStorage.getItem("userUUID"),
       textVectorSequence: textVectorSequence.value,
       offsetVectorSequence: offsetVectorSequence.value
     }

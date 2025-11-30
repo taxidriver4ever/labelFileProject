@@ -14,9 +14,8 @@ public class UploadFilePo implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private String fileName;
-    private String filePath;
-    private Integer fileSize;
+    private Long id;
+    private String fileUrl;
     private String textVectorSequence;
     private String offsetVectorSequence;
 }

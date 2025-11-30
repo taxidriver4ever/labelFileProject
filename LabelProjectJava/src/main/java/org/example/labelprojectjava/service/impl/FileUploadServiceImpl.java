@@ -1,9 +1,13 @@
 package org.example.labelprojectjava.service.impl;
 
 import jakarta.annotation.Resource;
+import org.example.labelprojectjava.consumer.ManualDeadLetterConsumer;
 import org.example.labelprojectjava.redis.UploadFileRedis;
+import org.example.labelprojectjava.redis.UserInformationRedis;
 import org.example.labelprojectjava.service.FileUploadService;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -11,6 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 import java.util.Set;
 
 @Service
@@ -21,6 +26,15 @@ public class FileUploadServiceImpl implements FileUploadService {
 
     @Resource
     private UploadFileRedis uploadFileRedis;
+
+    @Resource
+    private ManualDeadLetterConsumer manualDeadLetterConsumer;
+
+    @Resource
+    private UserInformationRedis userInformationRedis;
+
+    @Resource
+    private RedisTemplate<String, String> redisTemplate;
 
     private final String UPLOAD_DIR;
 
@@ -36,7 +50,7 @@ public class FileUploadServiceImpl implements FileUploadService {
 
         if(uploadFileRedis.existsUploadFile(fixedId)) return "该文件已存在";
 
-        uploadFileRedis.storeUploadFile(fixedId);
+        uploadFileRedis.storeFileWithLuaScript(fixedId);
 
         File folderPath = new File(UPLOAD_DIR);
 
@@ -58,8 +72,15 @@ public class FileUploadServiceImpl implements FileUploadService {
     }
 
     @Override
-    public Set<String> getUrls(String userUUID) {
+    public String getUrls(String userUUID) {
         return uploadFileRedis.getUserToDoFiles(userUUID);
+    }
+
+    @Override
+    public String storeVector(String textVectorSequence, String userUUID, String offsetVectorSequence) {
+        boolean b = userInformationRedis.setUserFreeWithLuaScript(userUUID);
+
+        return "消费失败";
     }
 
     private static String calculateMD5(MultipartFile file) throws IOException {

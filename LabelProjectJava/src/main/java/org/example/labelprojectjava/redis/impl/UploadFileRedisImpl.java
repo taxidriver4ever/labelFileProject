@@ -3,8 +3,10 @@ package org.example.labelprojectjava.redis.impl;
 import jakarta.annotation.Resource;
 import org.example.labelprojectjava.redis.UploadFileRedis;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Set;
 
 @Repository
@@ -14,9 +16,17 @@ public class UploadFileRedisImpl implements UploadFileRedis {
     private RedisTemplate<String, String> redisTemplate;
 
     @Override
-    public void storeUploadFile(String uploadFileMD5) {
-        redisTemplate.opsForHash().put("uploadFile:attribute:" + uploadFileMD5, "textVectorSequence", "");
-        redisTemplate.opsForHash().put("uploadFile:attribute:" + uploadFileMD5, "offsetVectorSequence", "");
+    public void storeFileWithLuaScript(String fileMD5) {
+        String luaScript =
+                "redis.call('HSET', KEYS[1], 'textVectorSequence', '', 'offsetVectorSequence', '', 'textVectorSequence2', '', 'offsetVectorSequence2', '') " +
+                        "return true";
+
+        DefaultRedisScript<Boolean> redisScript = new DefaultRedisScript<>();
+        redisScript.setScriptText(luaScript);
+        redisScript.setResultType(Boolean.class);
+
+        List<String> keys = List.of("uploadFile:attribute:" + fileMD5);
+        redisTemplate.execute(redisScript, keys);
     }
 
     @Override
@@ -27,18 +37,17 @@ public class UploadFileRedisImpl implements UploadFileRedis {
 
     @Override
     public boolean existsUploadFile(String uploadFileMD5) {
-        Object o = redisTemplate.opsForHash().get("uploadFile:attribute:" + uploadFileMD5, "textVectorSequence");
-        return o != null;
+        return redisTemplate.opsForHash().get("uploadFile:attribute:" + uploadFileMD5, "textVectorSequence") != null;
     }
 
     @Override
     public void storeToDoFile(String userUUID,String fileUrl) {
-        redisTemplate.opsForZSet().add("user:toDoList:" + userUUID,fileUrl,System.currentTimeMillis());
+        redisTemplate.opsForValue().set("user:toDo:" + userUUID,fileUrl);
     }
 
     @Override
-    public Set<String> getUserToDoFiles(String userUUID) {
-        return redisTemplate.opsForZSet().range("user:toDoList:" + userUUID, 0, -1);
+    public String getUserToDoFiles(String userUUID) {
+        return redisTemplate.opsForValue().get("user:toDo:" + userUUID);
     }
 
 }

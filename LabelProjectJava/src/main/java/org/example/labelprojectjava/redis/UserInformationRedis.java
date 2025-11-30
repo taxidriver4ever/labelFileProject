@@ -8,4 +8,5 @@ public interface UserInformationRedis {
     void storeUserUUID(String userUUID,String loginUUID);
     String getUserUUID(String userUUID);
     void storeUserStatus(String userUUID,Integer status);
+    boolean setUserFreeWithLuaScript(String userUUID);
 }

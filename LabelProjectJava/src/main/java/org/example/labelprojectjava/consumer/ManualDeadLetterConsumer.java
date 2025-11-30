@@ -7,7 +7,6 @@ import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessageBuilder;
 import org.springframework.amqp.core.MessageDeliveryMode;
 import org.springframework.amqp.core.MessageProperties;
-import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
@@ -19,7 +18,10 @@ import java.util.List;
 
 @Slf4j
 @Component
-public class FileUploadConsumer {
+public class ManualDeadLetterConsumer {
+
+    @Resource
+    private RabbitTemplate rabbitTemplate;
 
     @Resource
     private UploadFileRedis uploadFileRedis;
@@ -30,29 +32,54 @@ public class FileUploadConsumer {
     @Resource
     private SimpMessagingTemplate simpMessagingTemplate;
 
-    @Resource
-    private RabbitTemplate rabbitTemplate;
-
     private static final String ossIP = "http://127.0.0.1:8080/files/";
 
     private static final Integer free = 0;
 
     private static final Integer busy = 1;
 
-    private static final Integer undone = 0;
+    private static final Integer undone = 1;
 
     private static final String DLX_EXCHANGE_NAME = "dlx.uploadFile.exchange";
 
     private static final String DLX_ROUTING_KEY = "upload.file.dlx";
 
-    @RabbitListener(queues = "#{uploadFileQueue1.name}")
-    public void receive(String fileName) {
-        sendTask(fileName);
+    /**
+     * 手动从死信队列获取消息
+     */
+    public void manuallyConsumeDeadLetters() {
+        int batchSize = 2; // 每次处理的消息数量
+        int processedCount = 0;
+
+        for (int i = 0; i < batchSize; i++) {
+            Message message = rabbitTemplate.receive("dead.letter.queue");
+            if (message == null) {
+                break; // 队列为空
+            }
+
+            try {
+                String messageBody = new String(message.getBody());
+                log.info("手动消费死信消息: {}", messageBody);
+                // 处理消息业务逻辑
+                processMessage(messageBody);
+
+                processedCount++;
+
+            } catch (Exception e) {
+                log.error("处理消息失败: {}", e.getMessage());
+            }
+        }
+
+        log.info("本次处理了 {} 条死信消息", processedCount);
     }
 
-    @RabbitListener(queues = "#{uploadFileQueue2.name}")
-    public void receive2(String fileName) {
-        sendTask(fileName);
+    private void processMessage(String messageBody) {
+        try {
+            log.info("处理消息: {}", messageBody);
+            sendTask(messageBody);
+        } catch (Exception e) {
+            throw new RuntimeException("消息处理失败", e);
+        }
     }
 
     private void sendTask(String fileName) {
@@ -117,12 +144,11 @@ public class FileUploadConsumer {
         redisScript.setScriptText(luaScript);
         redisScript.setResultType(String.class);
 
-        List<String> keys = Arrays.asList("user:status", "uploadFile:userDo:" + fileName.split("\\.")[0]);
+        List<String> keys = Arrays.asList("user:status", "uploadFile:userDo:" + fileName);
         return redisTemplate.execute(redisScript, keys, free, busy, undone);
     }
 
     private static void getInfo(String message) {
         log.info(message);
     }
-
 }

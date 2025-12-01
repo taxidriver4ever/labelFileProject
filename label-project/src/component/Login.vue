@@ -37,7 +37,7 @@ const userNamePlaceHolder = ref("请输入用户名");
 const userPasswordPlaceHolder = ref("请输入密码");
 const isUserNameInputFocus = ref(false);
 const isUserPasswordInputFocus = ref(false);
-const serverUrl = "http://localhost:8080"
+const serverUrl = "http://26.46.22.92:8080"
 const userPasswordFocusInEvent = () => {
   isUserPasswordInputFocus.value = true;
   userPasswordPlaceHolder.value = "";
@@ -82,6 +82,7 @@ async function login() {
       alert("登录成功")
       window.location.href = "/upload-file"
     }
+    else alert("登录失败");
   }).catch(e => {
     alert(e);
   })

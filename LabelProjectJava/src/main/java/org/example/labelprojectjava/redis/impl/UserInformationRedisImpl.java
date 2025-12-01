@@ -52,5 +52,4 @@ public class UserInformationRedisImpl implements UserInformationRedis {
         List<String> keys = List.of("user:status");
         return redisTemplate.execute(redisScript, keys, free, userUUID);
     }
-
 }

@@ -1,6 +1,7 @@
 package org.example.labelprojectjava.controller;
 
 import jakarta.annotation.Resource;
+import lombok.extern.slf4j.Slf4j;
 import org.example.labelprojectjava.po.UploadFilePo;
 import org.example.labelprojectjava.service.FileUploadService;
 import org.example.labelprojectjava.vo.NormalResult;
@@ -14,6 +15,7 @@ import java.util.Set;
 @RestController
 @CrossOrigin(maxAge = 3600)
 @RequestMapping("/file")
+@Slf4j
 public class FileUploadController {
 
     @Resource
@@ -32,8 +34,17 @@ public class FileUploadController {
     }
 
     @PostMapping("/vector")
-    public NormalResult storeVector(@RequestBody UploadFilePo uploadFilePo){
-        return NormalResult.error("上传向量失败");
+    public NormalResult storeVector(@RequestParam String userUUID,
+                                    @RequestParam String fileUrl,
+                                    @RequestParam String textVectorSequence,
+                                    @RequestParam String offsetVectorSequence) throws InterruptedException {
+        String s = fileUploadService.storeVector(userUUID, fileUrl, textVectorSequence, offsetVectorSequence);
+        log.info(s);
+        return NormalResult.success(s);
     }
 
+    @GetMapping("/nothing")
+    public NormalResult getNothing(){
+        return NormalResult.success();
+    }
 }

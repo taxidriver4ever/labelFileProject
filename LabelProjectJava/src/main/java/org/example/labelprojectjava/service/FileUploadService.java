@@ -10,5 +10,5 @@ import java.util.Set;
 public interface FileUploadService {
     String uploadFile(MultipartFile file) throws NoSuchAlgorithmException, IOException;
     String getUrls(String userUUID);
-    String storeVector(String textVectorSequence, String userUUID, String offsetVectorSequence);
+    String storeVector(String userUUID, String fileUrl, String textVectorSequence, String offsetVectorSequence) throws InterruptedException;
 }

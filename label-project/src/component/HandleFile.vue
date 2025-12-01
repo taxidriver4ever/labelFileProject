@@ -37,8 +37,8 @@ import axios, { all } from 'axios';
 import { ElAside, ElButton, ElContainer, ElInput, ElLink, ElMain } from 'element-plus';
 
 const stompClient = ref<Client | null>(null); // STOMP客户端
-const websocketUrl = ref("http://localhost:8080/ws-upload")
-const serverUrl = "http://localhost:8080"
+const websocketUrl = ref("http://26.46.22.92:8080/ws-upload")
+const serverUrl = "http://26.46.22.92:8080"
 const userUUID = localStorage.getItem("userUUID");
 const loginUUID = localStorage.getItem("loginUUID");
 const isConnected = ref(false)
@@ -116,7 +116,7 @@ function getToDoUrls() {
 }
 
 async function commitTheVector() {
-  if(fileNeedToHandle.value === "") {
+  if (fileNeedToHandle.value === "") {
     alert("目前暂无处理文件")
     return
   }
@@ -132,16 +132,23 @@ async function commitTheVector() {
     url: serverUrl + "/file/vector",
     method: "POST",
     headers: {
-      "userUUID": localStorage.getItem("userUUID"),
-      "loginUUID": localStorage.getItem("loginUUID")
+      "userUUID": userUUID,
+      "loginUUID": loginUUID
     },
-    data: {
+    params: {
       userUUID: localStorage.getItem("userUUID"),
       textVectorSequence: textVectorSequence.value,
-      offsetVectorSequence: offsetVectorSequence.value
+      offsetVectorSequence: offsetVectorSequence.value,
+      fileUrl: fileNeedToHandle.value
     }
   }).then(res => {
-    if (res.data.code === 200) window.location.href = "/handle-file"
+    if (res.data.code === 200) {
+      alert(res.data.data);
+      window.location.href = "/handle-file"
+    }
+    else {
+      alert("未知错误");
+    }
   }).catch(e => {
     console.log(e)
   })

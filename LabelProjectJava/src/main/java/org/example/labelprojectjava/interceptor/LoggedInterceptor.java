@@ -22,9 +22,9 @@ public class LoggedInterceptor implements HandlerInterceptor {
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         String loginUUID = request.getHeader("loginUUID");
         String userUUID = request.getHeader("userUUID");
+        log.info(userUUID);
         if (userUUID != null && loginUUID != null && userInformationRedis.getUserUUID(userUUID).equals(loginUUID)) return true;
         response.getWriter().write("Not logged in");
-        log.info(loginUUID);
         return false;
     }
 

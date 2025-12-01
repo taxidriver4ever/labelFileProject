@@ -35,7 +35,7 @@ import { Back } from '@element-plus/icons-vue';
 
 const fileList = ref<UploadUserFile[]>([])
 const uploadRef = ref<UploadInstance>()
-const url = "http://127.0.0.1:8080";
+const url = "http://26.46.22.92:8080";
 const fileListMaxSize = 4;
 const userUUID = localStorage.getItem("userUUID");
 const loginUUID = localStorage.getItem("loginUUID");
@@ -46,6 +46,7 @@ function uploadFile() {
 }
 
 const handleUploadSuccess: UploadProps['onSuccess'] = (res) => {
+  if(res.data === "Not logged in") window.location.href = "/"
   ElMessage.success(res);
   if (fileList.value.length === fileListMaxSize) fileList.value.shift();
 }

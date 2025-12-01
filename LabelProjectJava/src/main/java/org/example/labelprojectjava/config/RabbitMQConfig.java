@@ -18,6 +18,7 @@ public class RabbitMQConfig {
     // 死信交换机
     public static final String DLX_EXCHANGE_NAME = "dlx.uploadFile.exchange";
 
+
     // 死信队列
     public static final String DLX_QUEUE_NAME = "dlx.uploadFile.queue";
 
@@ -29,6 +30,11 @@ public class RabbitMQConfig {
     // 死信交换机
     @Bean
     public DirectExchange dlxExchange() {
+        return new DirectExchange(DLX_EXCHANGE_NAME);
+    }
+
+    @Bean
+    public DirectExchange consumeDlxExchange() {
         return new DirectExchange(DLX_EXCHANGE_NAME);
     }
 

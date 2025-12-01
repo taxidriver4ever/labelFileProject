@@ -1,6 +1,7 @@
 package org.example.labelprojectjava.service.impl;
 
 import jakarta.annotation.Resource;
+import lombok.extern.slf4j.Slf4j;
 import org.example.labelprojectjava.consumer.ManualDeadLetterConsumer;
 import org.example.labelprojectjava.redis.UploadFileRedis;
 import org.example.labelprojectjava.redis.UserInformationRedis;
@@ -16,8 +17,10 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
+@Slf4j
 @Service
 public class FileUploadServiceImpl implements FileUploadService {
 
@@ -30,11 +33,8 @@ public class FileUploadServiceImpl implements FileUploadService {
     @Resource
     private ManualDeadLetterConsumer manualDeadLetterConsumer;
 
-    @Resource
-    private UserInformationRedis userInformationRedis;
+    private static final String SERVERIP = "http://26.46.22.92:8080/files/";
 
-    @Resource
-    private RedisTemplate<String, String> redisTemplate;
 
     private final String UPLOAD_DIR;
 
@@ -46,25 +46,30 @@ public class FileUploadServiceImpl implements FileUploadService {
     public String uploadFile(MultipartFile file) throws IOException {
         String originalFilename = file.getOriginalFilename();
 
-        String fixedId = calculateMD5(file);
-
-        if(uploadFileRedis.existsUploadFile(fixedId)) return "该文件已存在";
-
-        uploadFileRedis.storeFileWithLuaScript(fixedId);
-
-        File folderPath = new File(UPLOAD_DIR);
-
-        if(!folderPath.exists()) {
-            boolean successCreatePath = folderPath.mkdirs();
-        }
-
         if (originalFilename != null) {
+
+            String fixedId = calculateMD5(file);
+
             String[] split = originalFilename.split("\\.");
+
             String fileName = fixedId + "." + split[split.length - 1];
+
+            String fileUrl = SERVERIP + fileName;
+
+            if (!uploadFileRedis.getFileVector(fileUrl).isEmpty()) return "该文件已存在";
+
+            uploadFileRedis.storeFileVector(fileUrl,"","");
+
+            File folderPath = new File(UPLOAD_DIR);
+
+            if (!folderPath.exists()) {
+                boolean successCreatePath = folderPath.mkdirs();
+            }
+
             String filePath = UPLOAD_DIR + fileName;
             File dest = new File(filePath);
             file.transferTo(dest);
-            rabbitTemplate.convertAndSend("fanout.uploadFile.exchange", "", fileName);
+            rabbitTemplate.convertAndSend("fanout.uploadFile.exchange", "", fileUrl);
             return "文件上传成功";
         }
 
@@ -77,9 +82,36 @@ public class FileUploadServiceImpl implements FileUploadService {
     }
 
     @Override
-    public String storeVector(String textVectorSequence, String userUUID, String offsetVectorSequence) {
-        boolean b = userInformationRedis.setUserFreeWithLuaScript(userUUID);
+    public String storeVector(String userUUID, String fileUrl, String textVectorSequence, String offsetVectorSequence) throws InterruptedException {
+        String s = uploadFileRedis.setUserDone(userUUID, fileUrl);
 
+        if(s.equals("complete")){
+            manualDeadLetterConsumer.manuallyConsumeDeadLetters();
+            Map<Object, Object> fileVector = uploadFileRedis.getFileVector(fileUrl);
+
+            for (Map.Entry<Object, Object> entry : fileVector.entrySet()) {
+                String stringKey = entry.getKey().toString();
+                String stringValue = entry.getValue().toString();
+
+                log.info("{}:{}", stringKey, stringValue);
+
+                if(stringKey.equals("\"textVectorSequence\"") && !stringValue.equals(textVectorSequence)){
+                    rabbitTemplate.convertAndSend("fanout.uploadFile.exchange", "", fileUrl);
+                    uploadFileRedis.storeFileVector(fileUrl, "", "");
+                    return "回炉重造";
+                }
+                else if(stringKey.equals("\"offsetVectorSequence\"") && !stringValue.equals(offsetVectorSequence)){
+                    rabbitTemplate.convertAndSend("fanout.uploadFile.exchange", "", fileUrl);
+                    uploadFileRedis.storeFileVector(fileUrl, "", "");
+                    return "回炉重造";
+                }
+            }
+            return "消费成功";
+        }
+        else if(s.equals("incomplete")){
+            uploadFileRedis.storeFileVector(fileUrl, textVectorSequence, offsetVectorSequence);
+            return "消费成功";
+        }
         return "消费失败";
     }
 

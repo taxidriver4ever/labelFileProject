@@ -34,6 +34,26 @@ router.beforeEach((to, from, next) => {
   const userUUID = localStorage.getItem('userUUID') // 或者使用你的状态管理
   const loginUUID = localStorage.getItem('loginUUID') // 或者使用你的状态管理
 
+  axios({
+    url: serverUrl + '/file/nothing',
+    method: 'GET',
+    headers: {
+      userUUID: userUUID,
+      loginUUID: loginUUID,
+    },
+  })
+    .then((res) => {
+      if (res.data !== 'Not logged in') next()
+      else {
+        localStorage.removeItem('userUUID')
+        localStorage.removeItem('loginUUID')
+        next('/login')
+      }
+    })
+    .catch((e) => {
+      console.log(e)
+      next('/login')
+    })
   // 如果访问的不是登录页且未登录，重定向到登录页
   if (to.path !== '/login' && (!userUUID || !loginUUID)) {
     next('/login')

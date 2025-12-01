@@ -18,9 +18,9 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     },
   },
-  // server: {
-  //   host: '0.0.0.0',  // 允许所有IP访问
-  //   port: 5173,       // 指定端口
-  //   strictPort: true  // 如果端口被占用直接退出
-  // }
+  server: {
+    host: '0.0.0.0',  // 允许所有IP访问
+    port: 5173,       // 指定端口
+    strictPort: true  // 如果端口被占用直接退出
+  }
 })

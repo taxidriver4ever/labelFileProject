@@ -26,7 +26,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws-upload")
-                .setAllowedOriginPatterns("http://26.46.22.92:*", "http://26.46.22.92:*")
+                .setAllowedOriginPatterns("http://26.46.22.92:*", "http://26.46.22.92:*", "http://localhost:*")
                 .withSockJS();
     }
 

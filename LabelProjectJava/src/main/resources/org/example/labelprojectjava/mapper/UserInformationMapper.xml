@@ -8,6 +8,5 @@
     </select>
     <select id="getUserUUIDByUserNameAndUserPassword" resultType="java.lang.String">
         select userUUID from user_information where userName = #{userName} and userPassword = #{userPassword};
-
     </select>
 </mapper>

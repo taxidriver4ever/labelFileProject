@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.example.labelprojectjava.mapper.UploadFileMapper">
+    <insert id="insertUploadFile">
+        insert into upload_file (fileUrl,textVectorSequence,offsetVectorSequence,fileName,createdTime)
+        values (#{fileUrl},#{textVectorSequence},#{offsetVectorSequence},#{fileName},now());
+    </insert>
+    <select id="selectUploadFileList" resultType="org.example.labelprojectjava.po.UploadFilePo">
+        select * from upload_file
+    </select>
+</mapper>

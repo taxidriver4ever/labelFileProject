@@ -38,13 +38,13 @@ spring:
           min-idle: 0          # ???????
           max-wait: -1ms       # ??????????(-1??????)
       timeout: 2000ms          # ??????
-#  servlet:
-#    multipart:
-#      # 启用文件上传支持
-#      enabled: true
-#      # 单个文件的最大大小
-#      max-file-size: 10MB
-#      # 整个请求的最大大小（包括所有文件和表单数据）
-#      max-request-size: 100MB
-#      # 文件写入磁盘的阈值（超过这个大小会写入临时文件）
-#      file-size-threshold: 0
+  servlet:
+    multipart:
+      # 启用文件上传支持
+      enabled: true
+      # 单个文件的最大大小
+      max-file-size: 10MB
+      # 整个请求的最大大小（包括所有文件和表单数据）
+      max-request-size: 100MB
+      # 文件写入磁盘的阈值（超过这个大小会写入临时文件）
+      file-size-threshold: 0

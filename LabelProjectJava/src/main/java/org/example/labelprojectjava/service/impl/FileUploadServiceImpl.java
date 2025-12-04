@@ -3,10 +3,13 @@ package org.example.labelprojectjava.service.impl;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.example.labelprojectjava.consumer.ManualDeadLetterConsumer;
+import org.example.labelprojectjava.mapper.UploadFileMapper;
+import org.example.labelprojectjava.po.UploadFilePo;
 import org.example.labelprojectjava.redis.UploadFileRedis;
 import org.example.labelprojectjava.redis.UserInformationRedis;
 import org.example.labelprojectjava.service.FileUploadService;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
@@ -33,6 +36,9 @@ public class FileUploadServiceImpl implements FileUploadService {
     @Resource
     private ManualDeadLetterConsumer manualDeadLetterConsumer;
 
+    @Resource
+    private UploadFileMapper uploadFileMapper;
+
     private static final String SERVERIP = "http://26.46.22.92:8080/files/";
 
 
@@ -56,9 +62,9 @@ public class FileUploadServiceImpl implements FileUploadService {
 
             String fileUrl = SERVERIP + fileName;
 
-            if (!uploadFileRedis.getFileVector(fileUrl).isEmpty()) return "该文件已存在";
+            if (!uploadFileRedis.getFileAttribute(fileUrl).isEmpty()) return "该文件已存在";
 
-            uploadFileRedis.storeFileVector(fileUrl,"","");
+            uploadFileRedis.storeFileVectorAndFileName(fileUrl,"","", originalFilename);
 
             File folderPath = new File(UPLOAD_DIR);
 
@@ -78,6 +84,7 @@ public class FileUploadServiceImpl implements FileUploadService {
 
     @Override
     public String getUrls(String userUUID) {
+        log.info("current thread{}",Thread.currentThread());
         return uploadFileRedis.getUserToDoFiles(userUUID);
     }
 
@@ -87,7 +94,7 @@ public class FileUploadServiceImpl implements FileUploadService {
 
         if(s.equals("complete")){
             manualDeadLetterConsumer.manuallyConsumeDeadLetters();
-            Map<Object, Object> fileVector = uploadFileRedis.getFileVector(fileUrl);
+            Map<Object, Object> fileVector = uploadFileRedis.getFileAttribute(fileUrl);
 
             for (Map.Entry<Object, Object> entry : fileVector.entrySet()) {
                 String stringKey = entry.getKey().toString();
@@ -106,6 +113,7 @@ public class FileUploadServiceImpl implements FileUploadService {
                     return "回炉重造";
                 }
             }
+            rabbitTemplate.convertAndSend("direct.saveMySQL.exchange", "saveMySQL", fileUrl);
             return "消费成功";
         }
         else if(s.equals("incomplete")){
@@ -113,6 +121,11 @@ public class FileUploadServiceImpl implements FileUploadService {
             return "消费成功";
         }
         return "消费失败";
+    }
+
+    @Override
+    public List<UploadFilePo> getUploadFiles() {
+        return uploadFileMapper.selectUploadFileList();
     }
 
     private static String calculateMD5(MultipartFile file) throws IOException {

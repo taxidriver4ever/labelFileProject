@@ -3,7 +3,6 @@ import Login from '@/component/Login.vue'
 import UploadFile from '@/component/UploadFile.vue'
 import HandleFile from '@/component/HandleFile.vue'
 import axios from 'axios'
-
 const serverUrl = 'http://localhost:8080'
 
 const router = createRouter({
@@ -57,9 +56,7 @@ router.beforeEach((to, from, next) => {
   // 如果访问的不是登录页且未登录，重定向到登录页
   if (to.path !== '/login' && (!userUUID || !loginUUID)) {
     next('/login')
-  } else {
-    next()
-  }
+  } else next()
 })
 
 export default router

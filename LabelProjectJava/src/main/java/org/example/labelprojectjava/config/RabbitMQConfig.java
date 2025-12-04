@@ -18,7 +18,9 @@ public class RabbitMQConfig {
     // 死信交换机
     public static final String DLX_EXCHANGE_NAME = "dlx.uploadFile.exchange";
 
+    public static final String DIRECT_SAVE_MYSQL_EXCHANGE_NAME = "direct.saveMySQL.exchange";
 
+    public static final String DIRECT_SAVE_MYSQL_QUEUE_NAME = "direct.saveMySQL.queue";
     // 死信队列
     public static final String DLX_QUEUE_NAME = "dlx.uploadFile.queue";
 
@@ -34,8 +36,8 @@ public class RabbitMQConfig {
     }
 
     @Bean
-    public DirectExchange consumeDlxExchange() {
-        return new DirectExchange(DLX_EXCHANGE_NAME);
+    public DirectExchange directSaveMySQLExchange() {
+        return new DirectExchange(DIRECT_SAVE_MYSQL_EXCHANGE_NAME);
     }
 
     // 死信队列
@@ -45,12 +47,25 @@ public class RabbitMQConfig {
                 .build();
     }
 
+    @Bean
+    public Queue directSaveMySQLQueue() {
+        return QueueBuilder.durable(DIRECT_SAVE_MYSQL_QUEUE_NAME)
+                .build();
+    }
+
     // 绑定死信队列到死信交换机
     @Bean
     public Binding dlxBinding() {
         return BindingBuilder.bind(dlxQueue())
                 .to(dlxExchange())
                 .with("upload.file.dlx");
+    }
+
+    @Bean
+    public Binding directSaveMySQLBinding() {
+        return BindingBuilder.bind(directSaveMySQLQueue())
+                .to(directSaveMySQLExchange())
+                .with("saveMySQL");
     }
 
     // 2. 为每个消费者定义队列，并配置死信交换机

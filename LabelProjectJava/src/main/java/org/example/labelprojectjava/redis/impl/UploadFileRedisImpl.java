@@ -6,7 +6,6 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Repository;
 
-import java.lang.reflect.Array;
 import java.util.*;
 
 @Repository
@@ -62,6 +61,19 @@ public class UploadFileRedisImpl implements UploadFileRedis {
     }
 
     @Override
+    public void storeFileVectorAndFileName(String fileUrl, String textVectorSequence, String offsetVectorSequence, String fileName) {
+        String luaScript =
+                "redis.call('HSET', KEYS[1], ARGV[1], ARGV[2])" +
+                        "redis.call('HSET', KEYS[1], ARGV[3], ARGV[4])" +
+                        "redis.call('HSET',KEYS[1],ARGV[5],ARGV[6])";
+        DefaultRedisScript<String> redisScript = new DefaultRedisScript<>();
+        redisScript.setScriptText(luaScript);
+        redisScript.setResultType(String.class);
+        List<String> keys = List.of("uploadFile:attribute:" + fileUrl);
+        redisTemplate.execute(redisScript, keys, "textVectorSequence", textVectorSequence, "offsetVectorSequence", offsetVectorSequence, "fileName", fileName);
+    }
+
+    @Override
     public void storeFileVector(String fileUrl, String textVectorSequence, String offsetVectorSequence) {
         String luaScript =
                 "redis.call('HSET', KEYS[1], ARGV[1], ARGV[2])" +
@@ -70,11 +82,11 @@ public class UploadFileRedisImpl implements UploadFileRedis {
         redisScript.setScriptText(luaScript);
         redisScript.setResultType(String.class);
         List<String> keys = List.of("uploadFile:attribute:" + fileUrl);
-        redisTemplate.execute(redisScript, keys, "textVectorSequence",textVectorSequence , "offsetVectorSequence",offsetVectorSequence);
+        redisTemplate.execute(redisScript, keys, "textVectorSequence", textVectorSequence, "offsetVectorSequence", offsetVectorSequence);
     }
 
     @Override
-    public Map<Object,Object> getFileVector(String fileUrl) {
+    public Map<Object, Object> getFileAttribute(String fileUrl) {
         return redisTemplate.opsForHash().entries("uploadFile:attribute:" + fileUrl);
     }
 
